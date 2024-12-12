@@ -17,7 +17,7 @@ import covmap_construct as cc
 results = []
 
 # Loop through subjects and exercises
-for subject in range(1, 2):
+for subject in range(1, 11):
     for exercise in range(1, 4):
         identifier = f"sub{subject}ex{exercise}"
         print(f"Processing: {identifier}")
@@ -35,7 +35,7 @@ for subject in range(1, 2):
         cmdata_pcc_joint = np.hstack((cmdata_pcc_alpha, cmdata_pcc_beta, cmdata_pcc_gamma))
 
         # Get labels
-        labels = utils.get_label()
+        labels = utils.get_label(identifier)
 
         # Split data into training and testing sets
         split_index = int(0.7 * len(cmdata_pcc_joint))
@@ -52,14 +52,16 @@ for subject in range(1, 2):
         report = classification_report(labels_test, labels_pred, output_dict=True)
 
         # Store results
-        results.append({
+        result_entry = {
             "Identifier": identifier,
             "Accuracy": accuracy,
-            **{f"Class_{key}": value['f1-score'] for key, value in report.items() if key.isdigit()}
-        })
+            "Class_F1_Scores": {f"Class_{key}": value['f1-score'] for key, value in report.items() if key.isdigit()},
+            "Detailed_Report": report
+        }
+        results.append(result_entry)
 
 # Save results to Excel
-results_df = pd.DataFrame(results)
+results_df = pd.DataFrame([{key: value if key != "Class_F1_Scores" else str(value) for key, value in entry.items()} for entry in results])
 results_df.to_excel("results.xlsx", index=False)
 
 print("Processing complete. Results saved to 'results.xlsx'.")
